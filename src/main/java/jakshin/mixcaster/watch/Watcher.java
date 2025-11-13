@@ -18,6 +18,7 @@
 package jakshin.mixcaster.watch;
 
 import jakshin.mixcaster.download.Downloader;
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.mixcloud.MusicSet;
 import org.jetbrains.annotations.NotNull;
@@ -112,20 +113,26 @@ public class Watcher implements Runnable {
                 for (var musicSet : watchedMusicSets) {
                     String[] parts;
 
+                    // For HearThis, default to "tracks" if no musicType specified
+                    String musicType = musicSet.musicType();
+                    if (musicType == null && musicSet.source().equals("hearthis")) {
+                        musicType = "tracks";
+                    }
+
                     if (musicSet.playlist() != null) {
                         logger.log(INFO, "Checking {0}''s playlist {1} for new music",
                                 new String[] { musicSet.username(), musicSet.playlist() });
-                        parts = new String[] { musicSet.username(), musicSet.musicType(), musicSet.playlist() };
+                        parts = new String[] { musicSet.source(), musicSet.username(), musicSet.musicType(), musicSet.playlist() };
                     }
-                    else if (musicSet.musicType() != null) {
+                    else if (musicType != null) {
                         logger.log(INFO, "Checking {0}''s {1} for new music",
-                                new String[] { musicSet.username(), musicSet.musicType() });
-                        parts = new String[] { musicSet.username(), musicSet.musicType() };
+                                new String[] { musicSet.username(), musicType });
+                        parts = new String[] { musicSet.source(), musicSet.username(), musicType };
                     }
                     else {
                         logger.log(INFO, "Checking {0}''s default view for new music",
                                 new String[] { musicSet.username() });
-                        parts = new String[] { musicSet.username() };
+                        parts = new String[] { musicSet.source(), musicSet.username() };
                     }
 
                     try {
@@ -133,7 +140,7 @@ public class Watcher implements Runnable {
                         // we catch those below, so we can carry on checking any other watches
                         downloader.download(parts, true);
                     }
-                    catch (IOException | MixcloudException | TimeoutException | URISyntaxException ex) {
+                    catch (IOException | MixcloudException | HearThisException | TimeoutException | URISyntaxException ex) {
                         logger.log(ERROR, "Failed to check watched user/playlist for new music: {0}",
                                 new String[] { ex.getMessage() });
                         logger.log(DEBUG, "", ex);

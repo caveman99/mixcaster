@@ -180,8 +180,8 @@ class FreshenerTest {
         private WatchesAttr mockAttr;
 
         private final Path path = Path.of("/dev/null");  // the path must really exist
-        private final MusicSet fooShows = new MusicSet("foo", "shows", null);
-        private final MusicSet barStream = new MusicSet("var", "stream", null);
+        private final MusicSet fooShows = new MusicSet("mixcloud", "foo", "shows", null);
+        private final MusicSet barStream = new MusicSet("mixcloud", "var", "stream", null);
 
         @BeforeEach
         void setUp() throws IOException {

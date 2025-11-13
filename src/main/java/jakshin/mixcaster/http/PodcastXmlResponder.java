@@ -19,6 +19,9 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.dlqueue.Download;
 import jakshin.mixcaster.dlqueue.DownloadQueue;
+import jakshin.mixcaster.hearthis.HearThisClient;
+import jakshin.mixcaster.hearthis.HearThisException;
+import jakshin.mixcaster.hearthis.HearThisUserException;
 import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
@@ -51,7 +54,7 @@ class PodcastXmlResponder extends Responder {
      * @param out An output stream which can be used to output the response.
      */
     void respond(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
-            throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
+            throws HttpException, InterruptedException, IOException, MixcloudException, HearThisException, TimeoutException, URISyntaxException {
 
         logger.log(INFO, "Responding to request for podcast: {0}", request.path);
 
@@ -64,25 +67,36 @@ class PodcastXmlResponder extends Responder {
             pathParts[pathParts.length - 1] = last.substring(0, last.length() - 4);
         }
 
+        // Detect source from hostname in the request or use default
+        String source = detectSource(request);
+
+        // If the path starts with the source name, strip it
+        if (pathParts.length > 0 && pathParts[0].equalsIgnoreCase(source)) {
+            String[] newPathParts = new String[pathParts.length - 1];
+            System.arraycopy(pathParts, 1, newPathParts, 0, pathParts.length - 1);
+            pathParts = newPathParts;
+        }
+
         MusicSet musicSet;
         try {
-            musicSet = MusicSet.of(List.of(pathParts));
+            musicSet = MusicSet.of(List.of(pathParts), source);
         }
         catch (MusicSet.InvalidInputException ex) {
             throw new PodcastHttpException("Invalid podcast URL", ex);
         }
 
-        var client = new MixcloudClient(request.host());
-
-        if (musicSet.musicType() == null) {
-            String defaultMusicType = defaultViewCache.get(musicSet.username());
+        // Handle default music type for Mixcloud (HearThis defaults to "tracks" in the client)
+        if (musicSet.source().equals("mixcloud") && musicSet.musicType() == null) {
+            String cacheKey = "mixcloud:" + musicSet.username();
+            String defaultMusicType = defaultViewCache.get(cacheKey);
 
             if (defaultMusicType == null) {
-                defaultMusicType = client.queryDefaultView(musicSet.username());
-                defaultViewCache.put(musicSet.username(), defaultMusicType);
+                var mixcloudClient = new MixcloudClient(request.host());
+                defaultMusicType = mixcloudClient.queryDefaultView(musicSet.username());
+                defaultViewCache.put(cacheKey, defaultMusicType);
             }
 
-            musicSet = new MusicSet(musicSet.username(), defaultMusicType, null);
+            musicSet = new MusicSet(musicSet.source(), musicSet.username(), defaultMusicType, null);
         }
 
         String description = (musicSet.playlist() == null)
@@ -90,7 +104,7 @@ class PodcastXmlResponder extends Responder {
                 : String.format("%s's %s playlist", musicSet.username(), musicSet.playlist());
 
         logger.log(INFO, "The podcast will contain {0}", description);
-        Podcast podcast = getOrMakePodcast(description, client, musicSet);
+        Podcast podcast = getOrMakePodcast(description, request.host(), musicSet);
 
         // note that RSS was requested just now (used while managing stale music files)
         new Freshener().updateRssLastRequestedAttr();
@@ -124,20 +138,42 @@ class PodcastXmlResponder extends Responder {
     }
 
     /**
+     * Detects the music source from the request.
+     * For now, we default to Mixcloud for backwards compatibility.
+     * In the future, we could detect based on special URL patterns or headers.
+     */
+    @NotNull
+    private String detectSource(@NotNull HttpRequest request) {
+        // For now, always default to Mixcloud
+        // Users can explicitly specify HearThis by using hearthis.at URLs
+        // or by prefixing their path with /hearthis/
+        if (request.path.startsWith("/hearthis/")) {
+            return "hearthis";
+        }
+        return "mixcloud";
+    }
+
+    /**
      * Gets the described podcast from our cache,
      * creating and adding it to the cache if needed.
      */
     @NotNull
     private Podcast getOrMakePodcast(@NotNull String description,
-                                     @NotNull MixcloudClient client,
+                                     @NotNull String hostAndPort,
                                      @NotNull MusicSet musicSet)
-            throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
+            throws HttpException, InterruptedException, IOException, MixcloudException, HearThisException, TimeoutException, URISyntaxException {
 
         Podcast podcast = podcastCache.get(description);
 
         if (podcast == null) {
             try {
-                podcast = client.query(musicSet);
+                if (musicSet.source().equals("hearthis")) {
+                    var client = new HearThisClient(hostAndPort);
+                    podcast = client.query(musicSet);
+                } else {
+                    var client = new MixcloudClient(hostAndPort);
+                    podcast = client.query(musicSet);
+                }
                 podcastCache.put(description, podcast);
                 podcastCache.scrub();
             }
@@ -148,6 +184,11 @@ class PodcastXmlResponder extends Responder {
             }
             catch (MixcloudPlaylistException ex) {
                 String msg = String.format("%s doesn't have a \"%s\" playlist", ex.username, ex.playlist);
+                logger.log(ERROR, msg);
+                throw new PodcastHttpException(msg, ex);
+            }
+            catch (HearThisUserException ex) {
+                String msg = String.format("There's no HearThis user with username %s", ex.username);
                 logger.log(ERROR, msg);
                 throw new PodcastHttpException(msg, ex);
             }

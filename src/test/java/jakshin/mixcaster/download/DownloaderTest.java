@@ -20,6 +20,7 @@ package jakshin.mixcaster.download;
 import jakshin.mixcaster.TestUtilities;
 import jakshin.mixcaster.dlqueue.Download;
 import jakshin.mixcaster.dlqueue.DownloadQueue;
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.stale.attributes.RssLastRequestedAttr;
@@ -129,7 +130,7 @@ class DownloaderTest {
     }
 
     @Test
-    void queriesMixcloudBasedOnItsArguments() throws MixcloudException, IOException,
+    void queriesMixcloudBasedOnItsArguments() throws MixcloudException, HearThisException, IOException,
                             URISyntaxException, InterruptedException, TimeoutException {
 
         String artist = "ArmadaMusicOfficial";
@@ -148,7 +149,7 @@ class DownloaderTest {
 
             int index = mockedConstructionForMixcloudClient.constructed().size() - 1;
             MixcloudClient latestClient = mockedConstructionForMixcloudClient.constructed().get(index);
-            verify(latestClient).query(new MusicSet(artist, musicType, playlist));
+            verify(latestClient).query(new MusicSet("mixcloud", artist, musicType, playlist));
         }
 
         // since we passed a music type every time, we had no need to call queryDefaultView();
@@ -159,7 +160,7 @@ class DownloaderTest {
     }
 
     @Test
-    void acceptsMixcloudUrlAsItsArgument() throws MixcloudException, IOException,
+    void acceptsMixcloudUrlAsItsArgument() throws MixcloudException, HearThisException, IOException,
                             URISyntaxException, InterruptedException, TimeoutException {
 
         String artist = "ArmadaMusicOfficial";
@@ -178,12 +179,12 @@ class DownloaderTest {
             int index = mockedConstructionForMixcloudClient.constructed().size() - 1;
             MixcloudClient latestClient = mockedConstructionForMixcloudClient.constructed().get(index);
             if (playlist.isBlank()) playlist = null;  // for the MusicSet constructor
-            verify(latestClient).query(new MusicSet(artist, part, playlist));
+            verify(latestClient).query(new MusicSet("mixcloud", artist, part, playlist));
         }
     }
 
     @Test
-    void startsDownloadingMusicFiles() throws MixcloudException, IOException,
+    void startsDownloadingMusicFiles() throws MixcloudException, HearThisException, IOException,
                             URISyntaxException, InterruptedException, TimeoutException {
 
         final int[] queuedFileCount = {0};
@@ -203,7 +204,7 @@ class DownloaderTest {
     }
 
     @Test
-    void doesNotProcessTheDownloadQueueIfItDidNotEnqueueAnyFiles() throws MixcloudException, IOException,
+    void doesNotProcessTheDownloadQueueIfItDidNotEnqueueAnyFiles() throws MixcloudException, HearThisException, IOException,
                                                 URISyntaxException, InterruptedException, TimeoutException {
         mockPodcast.episodes.clear();
         String[] args = new String[] { "artist", "shows" };
@@ -215,7 +216,7 @@ class DownloaderTest {
     }
 
     @Test
-    void doesNotProcessTheDownloadQueueIfAllFilesAlreadyExist() throws MixcloudException, IOException,
+    void doesNotProcessTheDownloadQueueIfAllFilesAlreadyExist() throws MixcloudException, HearThisException, IOException,
                                                 URISyntaxException, InterruptedException, TimeoutException {
         // enqueue() is already mocked to return false by default,
         // as it would do if the file already existed locally
@@ -228,7 +229,7 @@ class DownloaderTest {
     }
 
     @Test
-    void resolvesTheDefaultViewIfNeeded() throws MixcloudException, IOException,
+    void resolvesTheDefaultViewIfNeeded() throws MixcloudException, HearThisException, IOException,
                             URISyntaxException, InterruptedException, TimeoutException {
 
         String[] args = new String[] { "just-a-username" };
@@ -237,11 +238,11 @@ class DownloaderTest {
 
         MixcloudClient client = mockedConstructionForMixcloudClient.constructed().get(0);
         verify(client).queryDefaultView("just-a-username");  // mocked to return "favorites"
-        verify(client).query(new MusicSet("just-a-username", "favorites", null));
+        verify(client).query(new MusicSet("mixcloud", "just-a-username", "favorites", null));
     }
 
     @Test
-    void resolvesTheDefaultViewFromUrlIfNeeded() throws MixcloudException, IOException,
+    void resolvesTheDefaultViewFromUrlIfNeeded() throws MixcloudException, HearThisException, IOException,
                             URISyntaxException, InterruptedException, TimeoutException {
 
         String artist = "ArmadaMusicOfficial";
@@ -251,11 +252,11 @@ class DownloaderTest {
 
         MixcloudClient client = mockedConstructionForMixcloudClient.constructed().get(0);
         verify(client).queryDefaultView(artist);  // mocked to return "favorites"
-        verify(client).query(new MusicSet(artist, "favorites", null));
+        verify(client).query(new MusicSet("mixcloud", artist, "favorites", null));
     }
 
     @Test
-    void keepsTheUnresolvedMusicSetAsTheWatchedSet() throws MixcloudException, IOException,
+    void keepsTheUnresolvedMusicSetAsTheWatchedSet() throws MixcloudException, HearThisException, IOException,
                                         URISyntaxException, InterruptedException, TimeoutException {
 
         // we need to resolve a user's default view if a music type wasn't given,
@@ -263,7 +264,7 @@ class DownloaderTest {
         // we want to write the attribute as such, not with the resolved music type
 
         String[] args = new String[] { "watched-username" };
-        MusicSet expectedSet = new MusicSet("watched-username", null, null);
+        MusicSet expectedSet = new MusicSet("mixcloud", "watched-username", null, null);
 
         try (MockedConstruction<Download> mocked = mockConstruction(Download.class,
                 (mock, context) -> {
@@ -280,7 +281,7 @@ class DownloaderTest {
     }
 
     @Test
-    void returnsAnErrorIfTheUserDoesNotExist() throws MixcloudException, IOException,
+    void returnsAnErrorIfTheUserDoesNotExist() throws MixcloudException, HearThisException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
 
         String[] args = new String[] { "does-not-exist", "shows" };
@@ -289,7 +290,7 @@ class DownloaderTest {
     }
 
     @Test
-    void returnsAnErrorIfThePlaylistDoesNotExist() throws MixcloudException, IOException,
+    void returnsAnErrorIfThePlaylistDoesNotExist() throws MixcloudException, HearThisException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
 
         String[] args = new String[] { "artist", "playlist", "does-not-exist" };
@@ -299,7 +300,7 @@ class DownloaderTest {
 
     @Test
     @SuppressWarnings("Convert2Lambda")
-    void invokesTheCallback() throws MixcloudException, IOException,
+    void invokesTheCallback() throws MixcloudException, HearThisException, IOException,
                                 URISyntaxException, InterruptedException, TimeoutException {
 
         doReturn(3).when(mockDownloadQueue).queueSize();
@@ -324,7 +325,7 @@ class DownloaderTest {
     }
 
     @Test
-    void doesNotUpdateTheRssLastRequestedAttribute() throws MixcloudException, IOException,
+    void doesNotUpdateTheRssLastRequestedAttribute() throws MixcloudException, HearThisException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
 
         final Path tempDir = Files.createTempDirectory("mix-down-");
@@ -346,7 +347,7 @@ class DownloaderTest {
     }
 
     @Test
-    void validatesOptions() throws MixcloudException, IOException,
+    void validatesOptions() throws MixcloudException, HearThisException, IOException,
                     URISyntaxException, InterruptedException, TimeoutException {
 
         List<String> invalids = List.of(
@@ -366,7 +367,7 @@ class DownloaderTest {
     }
 
     @Test
-    void respectsTheLimitOption() throws MixcloudException, IOException,
+    void respectsTheLimitOption() throws MixcloudException, HearThisException, IOException,
                     URISyntaxException, InterruptedException, TimeoutException {
 
         // It's in MixcloudClient that the episode_max_count system property is handled,
@@ -380,7 +381,7 @@ class DownloaderTest {
     }
 
     @Test
-    void respectsTheOutOption() throws MixcloudException, IOException,
+    void respectsTheOutOption() throws MixcloudException, HearThisException, IOException,
                     URISyntaxException, InterruptedException, TimeoutException {
 
         final Path tempDir = Files.createTempDirectory("mix-down-");
@@ -410,7 +411,7 @@ class DownloaderTest {
     }
 
     @Test
-    void respectsTheRssOption() throws MixcloudException, IOException,
+    void respectsTheRssOption() throws MixcloudException, HearThisException, IOException,
                     URISyntaxException, InterruptedException, TimeoutException {
 
         final Path tempDir = Files.createTempDirectory("mix-down-");
@@ -431,7 +432,7 @@ class DownloaderTest {
     }
 
     @Test
-    void respectsTheEmptyRssOption() throws MixcloudException, IOException,
+    void respectsTheEmptyRssOption() throws MixcloudException, HearThisException, IOException,
                     URISyntaxException, InterruptedException, TimeoutException {
 
         Path rssFile = null;

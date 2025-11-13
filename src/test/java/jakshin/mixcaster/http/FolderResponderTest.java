@@ -19,6 +19,7 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.TestUtilities;
 import jakshin.mixcaster.dlqueue.DownloadQueue;
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.MixcloudClient;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import org.junit.jupiter.api.*;
@@ -86,7 +87,7 @@ class FolderResponderTest {
     }
 
     @Test
-    void delegatesToPodcastXmlResponder() throws MixcloudException, HttpException, IOException,
+    void delegatesToPodcastXmlResponder() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
 
         try (MockedStatic<DownloadQueue> mockedStatic = mockStatic(DownloadQueue.class);
@@ -112,7 +113,7 @@ class FolderResponderTest {
     }
 
     @Test
-    void redirectsIfThePathIsAFile() throws MixcloudException, HttpException, IOException,
+    void redirectsIfThePathIsAFile() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/dir/file.m4a/", "HTTP/1.1");
 

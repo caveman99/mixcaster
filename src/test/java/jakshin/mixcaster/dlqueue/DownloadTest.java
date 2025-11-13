@@ -51,7 +51,7 @@ class DownloadTest {
         Download diff3 = new Download("remoteUrl", 42, new Date(date.getTime() + 1), "localFile");
         Download diff4 = new Download("remoteUrl", 42, date, "~~localFile~~");
         Download diff5 = new Download("remoteUrl", 42, date, "localFile",
-                new MusicSet("user", "shows", null));
+                new MusicSet("mixcloud", "user", "shows", null));
         assertEquals(baseline, diff1);  // remoteUrl isn't compared
         assertNotEquals(baseline, diff2);
         assertNotEquals(baseline, diff3);
@@ -70,7 +70,7 @@ class DownloadTest {
         assertEquals(baseline.hashCode(), same.hashCode());
 
         Download equivalent = new Download("~~remoteUrl~~", 42, date, "localFile",
-                new MusicSet("user", "shows", null));
+                new MusicSet("mixcloud", "user", "shows", null));
         assertEquals(baseline.hashCode(), equivalent.hashCode());
     }
 }

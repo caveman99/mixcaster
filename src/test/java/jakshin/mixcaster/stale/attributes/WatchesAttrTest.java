@@ -55,15 +55,15 @@ class WatchesAttrTest {
         assertThat(attr.exists()).isFalse();
 
         List<MusicSet> sets = new ArrayList<>();
-        sets.add(new MusicSet("foo", null, null));
+        sets.add(new MusicSet("mixcloud", "foo", null, null));
         attr.setValue(sets);
         assertThat(attr.exists()).isTrue();
 
         List<MusicSet> value = attr.getValue();
         assertThat(value).isEqualTo(sets);
 
-        sets.add(new MusicSet("bar's", "shows", null));
-        sets.add(new MusicSet("baz", "playlist", "some-music"));
+        sets.add(new MusicSet("mixcloud", "bar's", "shows", null));
+        sets.add(new MusicSet("mixcloud", "baz", "playlist", "some-music"));
         attr.setValue(sets);
 
         value = attr.getValue();

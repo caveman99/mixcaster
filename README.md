@@ -3,19 +3,19 @@
 <!--suppress HtmlDeprecatedAttribute, CheckImageSize -->
 <img src="src/main/resources/jakshin/mixcaster/http/logo.png" align="right" alt="" height="128">
 
-Mixcaster is a "proxy" server which allows subscribing to Mixcloud users' music as RSS podcasts, and downloading Mixcloud music files, so you can listen to them offline.
+Mixcaster is a "proxy" server which allows subscribing to Mixcloud and HearThis.at users' music as RSS podcasts, and downloading music files, so you can listen to them offline.
 
-You can subscribe to any of the feeds/collections of music that the Mixcloud user has made available: their stream, shows, favorites, listening history, or playlists. You can then listen to them in the podcast client of your choice.
+You can subscribe to any of the feeds/collections of music that users have made available: their stream, shows, favorites, listening history, or playlists (Mixcloud), or their tracks and likes (HearThis.at). You can then listen to them in the podcast client of your choice.
 
 ### Why does this exist?
 
-Some of my favorite music is on Mixcloud, and I like to listen to it in situations where I have little or no network connectivity. When users have joined Mixcloud Select, the Mixcloud mobile app lets you [download their music](https://help.mixcloud.com/hc/en-us/articles/360004054359-How-do-I-listen-offline-) and listen offline, which is great — subscribing is a fantastic way to support those artists, and gain the convenience of offline use. But not all Mixcloud users have joined Select, including many of the ones whose music I like most. This app lets me listen to those users' music offline too.
+Some of my favorite music is on Mixcloud and HearThis.at, and I like to listen to it in situations where I have little or no network connectivity. When users have joined Mixcloud Select, the Mixcloud mobile app lets you [download their music](https://help.mixcloud.com/hc/en-us/articles/360004054359-How-do-I-listen-offline-) and listen offline, which is great — subscribing is a fantastic way to support those artists, and gain the convenience of offline use. But not all Mixcloud users have joined Select, including many of the ones whose music I like most. This app lets me listen to those users' music offline too, as well as music from HearThis.at.
 
 ### What does it do?
 
-Mixcaster has two modes of operation: You can run it as a local server, and it will listen for HTTP requests, serving podcast RSS feeds and related music files in response (downloading from Mixcloud as needed); and then you can subscribe to its RSS feeds' URLs in a podcast client. Or, you can run it at a command line, to download some of a Mixcloud user's music to local files, for use however you like.
+Mixcaster has two modes of operation: You can run it as a local server, and it will listen for HTTP requests, serving podcast RSS feeds and related music files in response (downloading from Mixcloud or HearThis.at as needed); and then you can subscribe to its RSS feeds' URLs in a podcast client. Or, you can run it at a command line, to download music to local files, for use however you like.
 
-Downloads from Mixcloud take quite a while — the first ~5 MB is typically sent very quickly, but the rest of the download is then severely rate-limited — so multiple downloads are performed in parallel.
+Downloads from Mixcloud take quite a while — the first ~5 MB is typically sent very quickly, but the rest of the download is then severely rate-limited — so multiple downloads are performed in parallel. HearThis.at downloads are typically faster.
 
 ### Installation and use as a service
 
@@ -31,22 +31,38 @@ Or maybe you want to subscribe to their [Armada Trance Mixes](https://www.mixclo
 
 You can use a bookmarklet on any Mixcloud page that lists music, to load RSS for a podcast containing that music. Browse to your Mixcaster server's root (probably http://localhost:6499) for easy access to the bookmarklet.
 
+#### Using Mixcaster with HearThis.at
+
+To use Mixcaster with HearThis.at, prefix your URLs with `/hearthis/`. For example:
+* HearThis.at user tracks: `http://localhost:6499/hearthis/username/` or `http://localhost:6499/hearthis/username/tracks.xml`
+* HearThis.at user likes: `http://localhost:6499/hearthis/username/likes.xml`
+* HearThis.at user playlists: `http://localhost:6499/hearthis/username/playlists.xml`
+
+Alternatively, you can use HearThis.at URLs directly at the command line:
+* `mixcaster -download https://hearthis.at/username/`
+
 When you first subscribe to a user's music, Mixcaster won't have had a chance to download their music files from Mixcloud yet. Mixcaster tries to make this clear by appending `[DOWNLOADING, CAN'T PLAY YET]` to the title of any episode whose music file isn't fully downloaded yet, because trying to play those podcast episodes won't work. Just wait a few minutes, and when your podcast app next refreshes the podcast (or when you refresh it manually, if you're the impatient type), some or all of the episodes' files will have finished downloading, and you'll be able to play them.
 
 By the way, the first request to Mixcaster for a podcast's RSS XML, before its music files have been fully downloaded, also runs a bit slowly — taking 10 seconds or more to complete — because Mixcaster has to issue a HEAD request to Mixcloud's servers for each music file in order to populate the podcast's list of episodes.
 
 One way to minimize both of those minor hassles is to have Mixcaster "watch" the music you're interested in. Which brings us to...
 
-### Watching Mixcloud users and playlists
+### Watching Mixcloud and HearThis.at users and playlists
 
-Mixcaster can watch specific Mixcloud users or playlists for you. It will periodically check Mixcloud for new music in the background, and immediately download any it finds. When the timing works out well, Mixcaster will notice new music and download it before your podcast app queries it, (mostly) avoiding the annoyance of opening your podcast client and seeing `[DOWNLOADING, CAN'T PLAY YET]`.
+Mixcaster can watch specific Mixcloud or HearThis.at users or playlists for you. It will periodically check for new music in the background, and immediately download any it finds. When the timing works out well, Mixcaster will notice new music and download it before your podcast app queries it, (mostly) avoiding the annoyance of opening your podcast client and seeing `[DOWNLOADING, CAN'T PLAY YET]`.
 
-You can list the users and playlists you'd like for Mixcaster to watch in [mixcaster-watches.conf](config/mixcaster-watches.conf), and configure how often it checks Mixcloud for new music in [mixcaster-settings.properties](config/mixcaster-settings.properties).
+You can list the users and playlists you'd like for Mixcaster to watch in [mixcaster-watches.conf](config/mixcaster-watches.conf), and configure how often it checks for new music in [mixcaster-settings.properties](config/mixcaster-settings.properties).
+
+For HearThis.at users, you can use either:
+* Full URL format: `https://hearthis.at/username/`
+* Prefix format: `hearthis username tracks` or `hearthis username likes`
 
 ### Downloading music from a command line
 
-You can pass a Mixcloud URL that lists music to Mixcaster, and it'll download music files listed on that page.
-For example: `mixcaster -download https://www.mixcloud.com/ArmadaMusicOfficial/uploads/`
+You can pass a Mixcloud or HearThis.at URL that lists music to Mixcaster, and it'll download music files listed on that page.
+For example:
+* Mixcloud: `mixcaster -download https://www.mixcloud.com/ArmadaMusicOfficial/uploads/`
+* HearThis.at: `mixcaster -download https://hearthis.at/username/`
 
 Run `mixcaster -help` for full usage details, including options which limit how many music files will be downloaded, and tell Mixcaster where to put them.
 

@@ -19,6 +19,7 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.TestUtilities;
 import jakshin.mixcaster.dlqueue.DownloadQueue;
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
 import jakshin.mixcaster.podcast.PodcastEpisode;
@@ -123,7 +124,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void worksWithOrWithoutXmlAtTheEndOfTheUrl() throws MixcloudException, HttpException, IOException,
+    void worksWithOrWithoutXmlAtTheEndOfTheUrl() throws MixcloudException, HearThisException, HttpException, IOException,
                                         URISyntaxException, InterruptedException, TimeoutException {
         var request1 = new HttpRequest("GET", "/artist/shows.xml", "HTTP/1.1");
         responder.respond(request1, writer, out);
@@ -165,42 +166,47 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void resolvesAndCachesDefaultViews() throws MixcloudException, HttpException, IOException,
+    void resolvesAndCachesDefaultViews() throws MixcloudException, HearThisException, HttpException, IOException,
                                         URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/artist2", "HTTP/1.1");
 
         responder.respond(request, writer, out);
 
-        MixcloudClient mockClient = mockedClientConstruction.constructed().get(0);
-        verify(mockClient).queryDefaultView("artist2");
-        verify(mockClient).query(new MusicSet("artist2", "stream", null));
+        // First call should create 2 clients: one for queryDefaultView, one for query
+        assertThat(mockedClientConstruction.constructed()).hasSize(2);
+        MixcloudClient mockClient0 = mockedClientConstruction.constructed().get(0);
+        MixcloudClient mockClient1 = mockedClientConstruction.constructed().get(1);
+        verify(mockClient0).queryDefaultView("artist2");
+        verify(mockClient1).query(new MusicSet("mixcloud", "artist2", "stream", null));
 
         // the user's default view should be in PodcastXmlResponder's cache now
         responder.respond(request, writer, out);
 
-        mockClient = mockedClientConstruction.constructed().get(1);
-        verify(mockClient, never()).queryDefaultView("artist2");
+        // Second call should not create any new clients (uses cached data)
+        assertThat(mockedClientConstruction.constructed()).hasSize(2);
     }
 
     @Test
-    void cachesPodcastObjects() throws MixcloudException, HttpException, IOException,
+    void cachesPodcastObjects() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/artist3/shows.xml", "HTTP/1.1");
 
         responder.respond(request, writer, out);
 
+        // First call should create 1 client for query (musicType is specified, no need for queryDefaultView)
+        assertThat(mockedClientConstruction.constructed()).hasSize(1);
         MixcloudClient mockClient = mockedClientConstruction.constructed().get(0);
         verify(mockClient).query(any());
 
         // the podcast should be in PodcastXmlResponder's cache now
         responder.respond(request, writer, out);
 
-        mockClient = mockedClientConstruction.constructed().get(1);
-        verify(mockClient, never()).query(any());
+        // Second call should not create any new clients (uses cached podcast)
+        assertThat(mockedClientConstruction.constructed()).hasSize(1);
     }
 
     @Test
-    void checksTheExistenceOfEachFile() throws MixcloudException, HttpException, IOException,
+    void checksTheExistenceOfEachFile() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/somebody/shows.xml", "HTTP/1.1");
 
@@ -248,7 +254,7 @@ class PodcastXmlResponderTest {
 
     @Test
     @Order(1)  // so the RssLastRequested attribute hasn't already been set
-    void setsTheRssLastRequestAttribute() throws MixcloudException, HttpException, IOException,
+    void setsTheRssLastRequestAttribute() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         var attr = new RssLastRequestedAttr(mockMusicDir);
         assertThat(attr.exists()).isFalse();  // sanity check
@@ -262,7 +268,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void handlesIfModifiedSince() throws MixcloudException, HttpException, IOException,
+    void handlesIfModifiedSince() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/artist5/shows.xml", "HTTP/1.1");
 
@@ -283,7 +289,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void startsDownloadingNewFiles() throws MixcloudException, HttpException, IOException,
+    void startsDownloadingNewFiles() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         when(mockDownloadQueue.enqueue(any())).thenReturn(true);
         request = new HttpRequest("GET", "/artist6/shows.xml", "HTTP/1.1");
@@ -315,7 +321,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void respondsToHeadRequests() throws MixcloudException, HttpException, IOException,
+    void respondsToHeadRequests() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         var headRequest = new HttpRequest("HEAD", "/artist7/shows.xml", "HTTP/1.1");
 
@@ -329,7 +335,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void respondsToGetRequests() throws MixcloudException, HttpException, IOException,
+    void respondsToGetRequests() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/artist8/shows.xml", "HTTP/1.1");
 

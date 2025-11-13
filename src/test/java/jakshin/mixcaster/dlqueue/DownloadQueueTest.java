@@ -151,7 +151,7 @@ class DownloadQueueTest {
 
     @Test
     void updatesAttributesOnExistingFiles() throws IOException {
-        var watchedSet = new MusicSet("that-guy", "shows", null);
+        var watchedSet = new MusicSet("mixcloud", "that-guy", "shows", null);
         Download download = createDownload("test-exists-2.m4a", watchedSet);
         Files.writeString(Path.of(download.localFilePath), "test-exists-2");
         DownloadQueue q = DownloadQueue.getInstance();
@@ -269,7 +269,7 @@ class DownloadQueueTest {
             String artist = "user-" + randomString(8);  // name of the music file's parent directory
             filename = randomString(10) + ".m4a";
             lastModified = Date.from(Instant.now().minus(3, ChronoUnit.DAYS));
-            watchedSet = new MusicSet(artist, "shows", null);
+            watchedSet = new MusicSet("mixcloud", artist, "shows", null);
 
             String remoteUrl = "http://example.com/" + filename;
             String localPath = Path.of(mockMusicDir.toString(), artist, filename).toString();

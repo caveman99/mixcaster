@@ -19,6 +19,9 @@ package jakshin.mixcaster.download;
 
 import jakshin.mixcaster.dlqueue.Download;
 import jakshin.mixcaster.dlqueue.DownloadQueue;
+import jakshin.mixcaster.hearthis.HearThisClient;
+import jakshin.mixcaster.hearthis.HearThisException;
+import jakshin.mixcaster.hearthis.HearThisUserException;
 import jakshin.mixcaster.http.ServableFile;
 import jakshin.mixcaster.mixcloud.*;
 import jakshin.mixcaster.podcast.Podcast;
@@ -59,7 +62,7 @@ public class Downloader {
      * @return A code indicating success (0) or failure (1 or 2).
      */
     public int download(@NotNull String[] args, boolean watched)
-            throws InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException,
+            throws InterruptedException, IOException, MixcloudException, HearThisException, TimeoutException, URISyntaxException,
                    MusicSet.InvalidInputException, DownloadOptions.InvalidOptionException {
 
         try {
@@ -80,16 +83,23 @@ public class Downloader {
                 System.setProperty("episode_max_count", opts.limit());
             }
 
-            // query Mixcloud
+            // query the appropriate source
             String localHostAndPort = System.getProperty("http_hostname") + ":" + System.getProperty("http_port");
-            MixcloudClient client = new MixcloudClient(localHostAndPort);
+            Podcast podcast;
 
-            if (musicSet.musicType() == null) {
-                String defaultMusicType = client.queryDefaultView(musicSet.username());
-                musicSet = new MusicSet(musicSet.username(), defaultMusicType, null);
+            if (musicSet.source().equals("hearthis")) {
+                HearThisClient client = new HearThisClient(localHostAndPort);
+                podcast = client.query(musicSet);
+            } else {
+                MixcloudClient client = new MixcloudClient(localHostAndPort);
+
+                if (musicSet.musicType() == null) {
+                    String defaultMusicType = client.queryDefaultView(musicSet.username());
+                    musicSet = new MusicSet(musicSet.source(), musicSet.username(), defaultMusicType, null);
+                }
+
+                podcast = client.query(musicSet);
             }
-
-            Podcast podcast = client.query(musicSet);
 
             // do the things
             if (opts.rssPath() != null) {
@@ -101,6 +111,11 @@ public class Downloader {
         }
         catch (MixcloudUserException ex) {
             logger.log(ERROR, "There''s no Mixcloud user with username {0}", ex.username);
+            logger.log(DEBUG, "", ex);
+            return 2;
+        }
+        catch (HearThisUserException ex) {
+            logger.log(ERROR, "There''s no HearThis user with username {0}", ex.username);
             logger.log(DEBUG, "", ex);
             return 2;
         }
