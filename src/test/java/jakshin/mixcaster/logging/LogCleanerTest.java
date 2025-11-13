@@ -44,9 +44,9 @@ class LogCleanerTest {
 
         for (int i = 5; i >= 1; i--) {
             createMockLogFile(String.format("service.%d.log", i));
-            Thread.sleep(2);  // ensure distinct timestamps
+            Thread.sleep(10);  // ensure distinct timestamps
             createMockLogFile(String.format("download.%d.log", i));
-            Thread.sleep(2);  // ensure distinct timestamps
+            Thread.sleep(10);  // ensure distinct timestamps
         }
     }
 
