@@ -19,6 +19,7 @@ package jakshin.mixcaster.http;
 
 import jakshin.mixcaster.TestUtilities;
 import jakshin.mixcaster.dlqueue.DownloadQueue;
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.MixcloudClient;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.stale.attributes.LastUsedAttr;
@@ -96,7 +97,7 @@ class FileResponderTest {
     }
 
     @Test
-    void delegatesToPodcastXmlResponder() throws MixcloudException, HttpException, IOException,
+    void delegatesToPodcastXmlResponder() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
 
         try (MockedStatic<DownloadQueue> mockedStatic = mockStatic(DownloadQueue.class);
