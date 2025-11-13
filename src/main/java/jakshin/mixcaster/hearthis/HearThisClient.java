@@ -272,32 +272,21 @@ public class HearThisClient {
             }
 
             String body = Objects.requireNonNull(response.body()).string();
-            JsonArray jsonArray = new Gson().fromJson(body, JsonArray.class);
+            JsonObject userObj = new Gson().fromJson(body, JsonObject.class);
 
-            if (jsonArray == null || jsonArray.isEmpty()) {
+            if (userObj == null) {
                 throw new HearThisUserException("HearThis user has no data", username);
             }
 
-            // Get user info from the first track
-            JsonObject firstTrack = jsonArray.get(0).getAsJsonObject();
-            JsonObject userObj = firstTrack.has("user") ? firstTrack.getAsJsonObject("user") : null;
-
             var podcast = new Podcast();
             podcast.userID = username;
+            podcast.title = getJsonString(userObj, "username", username);
+            podcast.iTunesAuthorAndOwnerName = podcast.title;
+            podcast.description = getJsonString(userObj, "description", "");
 
-            if (userObj != null) {
-                podcast.title = getJsonString(userObj, "username", username);
-                podcast.iTunesAuthorAndOwnerName = podcast.title;
-                podcast.description = getJsonString(userObj, "description", "");
-
-                String avatarUrl = getJsonString(userObj, "avatar_url", null);
-                if (avatarUrl != null && !avatarUrl.isBlank()) {
-                    podcast.iTunesImageUrl = new URI(avatarUrl);
-                }
-            } else {
-                podcast.title = username;
-                podcast.iTunesAuthorAndOwnerName = username;
-                podcast.description = "";
+            String avatarUrl = getJsonString(userObj, "avatar_url", null);
+            if (avatarUrl != null && !avatarUrl.isBlank()) {
+                podcast.iTunesImageUrl = new URI(avatarUrl);
             }
 
             podcast.link = new URI(HEARTHIS_WEB + username + "/");
