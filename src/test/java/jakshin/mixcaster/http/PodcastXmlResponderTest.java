@@ -172,15 +172,18 @@ class PodcastXmlResponderTest {
 
         responder.respond(request, writer, out);
 
-        MixcloudClient mockClient = mockedClientConstruction.constructed().get(0);
-        verify(mockClient).queryDefaultView("artist2");
-        verify(mockClient).query(new MusicSet("mixcloud", "artist2", "stream", null));
+        // First call should create 2 clients: one for queryDefaultView, one for query
+        assertThat(mockedClientConstruction.constructed()).hasSize(2);
+        MixcloudClient mockClient0 = mockedClientConstruction.constructed().get(0);
+        MixcloudClient mockClient1 = mockedClientConstruction.constructed().get(1);
+        verify(mockClient0).queryDefaultView("artist2");
+        verify(mockClient1).query(new MusicSet("mixcloud", "artist2", "stream", null));
 
         // the user's default view should be in PodcastXmlResponder's cache now
         responder.respond(request, writer, out);
 
-        mockClient = mockedClientConstruction.constructed().get(1);
-        verify(mockClient, never()).queryDefaultView("artist2");
+        // Second call should not create any new clients (uses cached data)
+        assertThat(mockedClientConstruction.constructed()).hasSize(2);
     }
 
     @Test
@@ -190,14 +193,16 @@ class PodcastXmlResponderTest {
 
         responder.respond(request, writer, out);
 
+        // First call should create 1 client for query (musicType is specified, no need for queryDefaultView)
+        assertThat(mockedClientConstruction.constructed()).hasSize(1);
         MixcloudClient mockClient = mockedClientConstruction.constructed().get(0);
         verify(mockClient).query(any());
 
         // the podcast should be in PodcastXmlResponder's cache now
         responder.respond(request, writer, out);
 
-        mockClient = mockedClientConstruction.constructed().get(1);
-        verify(mockClient, never()).query(any());
+        // Second call should not create any new clients (uses cached podcast)
+        assertThat(mockedClientConstruction.constructed()).hasSize(1);
     }
 
     @Test
