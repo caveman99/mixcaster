@@ -26,27 +26,38 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * A "set" of music files, defined by three bits of info: a Mixcloud user,
- * a music type (stream, uploads, etc.), and playlist slug if applicable.
+ * A "set" of music files, defined by four bits of info: a music source,
+ * a user, a music type (stream, uploads, etc.), and playlist slug if applicable.
  *
- * @param username  A Mixcloud user's username. If this is empty, the music set isn't valid.
+ * @param source    The music source (mixcloud or hearthis).
+ * @param username  A user's username. If this is empty, the music set isn't valid.
  * @param musicType A music type (stream, shows, favorites, history, or playlist).
  *                  If this is empty, MixcloudClient's queryDefaultView() should be used.
- * @param playlist  A playlist's slug (the last element of its Mixcloud URL).
+ * @param playlist  A playlist's slug (the last element of its URL).
  *                  This should empty unless musicType is "playlist", in which case it's required.
  */
-public record MusicSet(@NotNull String username, @Nullable String musicType, @Nullable String playlist) {
+public record MusicSet(@NotNull String source, @NotNull String username, @Nullable String musicType, @Nullable String playlist) {
     /**
      * Creates a new instance.
      */
     public MusicSet {
-        if (username.endsWith("'s") || username.endsWith("’s") || username.endsWith("‘s")) {
+        if (username.endsWith("'s") || username.endsWith("'s") || username.endsWith("'s")) {
             // un-possessive the username
             username = username.substring(0, username.length() - 2);
         }
 
         if (username.isBlank()) {
-            throw new InvalidInputException("Empty Mixcloud username");
+            throw new InvalidInputException("Empty username");
+        }
+
+        if (source == null || source.isBlank()) {
+            throw new InvalidInputException("Empty source");
+        }
+
+        // Normalize source
+        source = source.toLowerCase(Locale.ROOT);
+        if (!source.equals("mixcloud") && !source.equals("hearthis")) {
+            throw new InvalidInputException("Invalid source: " + source + " (must be 'mixcloud' or 'hearthis')");
         }
 
         if (musicType != null) {
@@ -55,6 +66,8 @@ public record MusicSet(@NotNull String username, @Nullable String musicType, @Nu
                 case "uploads" -> "shows";
                 case "listens" -> "history";
                 case "playlists" -> "playlist";
+                case "tracks" -> "shows";  // HearThis uses "tracks" instead of "shows"
+                case "likes" -> "favorites";  // HearThis uses "likes" instead of "favorites"
                 default -> throw new InvalidInputException("Invalid music type: " + musicType);
             };
         }
@@ -76,23 +89,46 @@ public record MusicSet(@NotNull String username, @Nullable String musicType, @Nu
     @Contract("_ -> new")
     @NotNull
     public static MusicSet of(@NotNull final List<String> input) throws InvalidInputException {
+        return of(input, "mixcloud");  // default to Mixcloud for backwards compatibility
+    }
+
+    /**
+     * Creates a new instance with explicit source.
+     * @param input Input that defines the music set (username, music type, playlist).
+     * @param defaultSource The default source to use if not specified in the URL.
+     */
+    @Contract("_, _ -> new")
+    @NotNull
+    public static MusicSet of(@NotNull final List<String> input, @NotNull String defaultSource) throws InvalidInputException {
         if (input.isEmpty() || input.size() > 3) {
             throw new InvalidInputException("Wrong number of arguments: " + input.size());
         }
 
         final String mixcloudSite = "https://www.mixcloud.com/";  // with trailing slash, so we strip it below
-        if (input.size() == 1 && input.get(0).startsWith(mixcloudSite)) {
+        final String hearthisSite = "https://hearthis.at/";  // with trailing slash, so we strip it below
+
+        String source = defaultSource;
+        String firstArg = input.get(0);
+
+        if (input.size() == 1 && firstArg.startsWith(mixcloudSite)) {
             // split the URL into its parts, and recurse
-            String path = input.get(0).substring(mixcloudSite.length());
+            String path = firstArg.substring(mixcloudSite.length());
             String[] pathParts = path.split("/");  // trailing empty string not included
-            return of(List.of(pathParts));
+            return of(List.of(pathParts), "mixcloud");
+        }
+
+        if (input.size() == 1 && firstArg.startsWith(hearthisSite)) {
+            // split the URL into its parts, and recurse
+            String path = firstArg.substring(hearthisSite.length());
+            String[] pathParts = path.split("/");  // trailing empty string not included
+            return of(List.of(pathParts), "hearthis");
         }
 
         String username = input.get(0);
         String musicType = (input.size() > 1) ? input.get(1).toLowerCase(Locale.ROOT) : null;
         String playlist = (input.size() > 2) ? input.get(2) : null;
 
-        return new MusicSet(username, musicType, playlist);
+        return new MusicSet(source, username, musicType, playlist);
     }
 
     /**
@@ -103,12 +139,13 @@ public record MusicSet(@NotNull String username, @Nullable String musicType, @Nu
     @NotNull
     @Override
     public String toString() {
+        String sourcePrefix = source.equals("hearthis") ? "[HearThis] " : "";
         if (musicType == null)
-            return username;  // a user's default view
+            return sourcePrefix + username;  // a user's default view
         else if (playlist == null)
-            return String.format("%s's %s", username, musicType);
+            return String.format("%s%s's %s", sourcePrefix, username, musicType);
         else
-            return String.format("%s's playlist %s", username, playlist);
+            return String.format("%s%s's playlist %s", sourcePrefix, username, playlist);
     }
 
     /**
