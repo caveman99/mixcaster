@@ -123,7 +123,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void worksWithOrWithoutXmlAtTheEndOfTheUrl() throws MixcloudException, HttpException, IOException,
+    void worksWithOrWithoutXmlAtTheEndOfTheUrl() throws MixcloudException, HearThisException, HttpException, IOException,
                                         URISyntaxException, InterruptedException, TimeoutException {
         var request1 = new HttpRequest("GET", "/artist/shows.xml", "HTTP/1.1");
         responder.respond(request1, writer, out);
@@ -165,7 +165,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void resolvesAndCachesDefaultViews() throws MixcloudException, HttpException, IOException,
+    void resolvesAndCachesDefaultViews() throws MixcloudException, HearThisException, HttpException, IOException,
                                         URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/artist2", "HTTP/1.1");
 
@@ -183,7 +183,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void cachesPodcastObjects() throws MixcloudException, HttpException, IOException,
+    void cachesPodcastObjects() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/artist3/shows.xml", "HTTP/1.1");
 
@@ -200,7 +200,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void checksTheExistenceOfEachFile() throws MixcloudException, HttpException, IOException,
+    void checksTheExistenceOfEachFile() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/somebody/shows.xml", "HTTP/1.1");
 
@@ -248,7 +248,7 @@ class PodcastXmlResponderTest {
 
     @Test
     @Order(1)  // so the RssLastRequested attribute hasn't already been set
-    void setsTheRssLastRequestAttribute() throws MixcloudException, HttpException, IOException,
+    void setsTheRssLastRequestAttribute() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         var attr = new RssLastRequestedAttr(mockMusicDir);
         assertThat(attr.exists()).isFalse();  // sanity check
@@ -262,7 +262,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void handlesIfModifiedSince() throws MixcloudException, HttpException, IOException,
+    void handlesIfModifiedSince() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/artist5/shows.xml", "HTTP/1.1");
 
@@ -283,7 +283,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void startsDownloadingNewFiles() throws MixcloudException, HttpException, IOException,
+    void startsDownloadingNewFiles() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         when(mockDownloadQueue.enqueue(any())).thenReturn(true);
         request = new HttpRequest("GET", "/artist6/shows.xml", "HTTP/1.1");
@@ -315,7 +315,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void respondsToHeadRequests() throws MixcloudException, HttpException, IOException,
+    void respondsToHeadRequests() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         var headRequest = new HttpRequest("HEAD", "/artist7/shows.xml", "HTTP/1.1");
 
@@ -329,7 +329,7 @@ class PodcastXmlResponderTest {
     }
 
     @Test
-    void respondsToGetRequests() throws MixcloudException, HttpException, IOException,
+    void respondsToGetRequests() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/artist8/shows.xml", "HTTP/1.1");
 
