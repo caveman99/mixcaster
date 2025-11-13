@@ -67,7 +67,14 @@ public class WatchesAttr extends BaseAttr {
             if (setStr.isBlank()) continue;
 
             try {
-                String[] words = setStr.split("\\s+");
+                // Handle old format: convert "[HearThis] username's tracks" to "hearthis username tracks"
+                String normalized = setStr
+                        .replace("[HearThis]", "hearthis")  // old HearThis prefix
+                        .replaceAll("'s\\b", "")            // remove possessive apostrophes
+                        .trim()
+                        .replaceAll("\\s+", " ");           // normalize whitespace
+
+                String[] words = normalized.split("\\s+");
                 MusicSet set = MusicSet.of(List.of(words));
                 currentValue.add(set);
             }
