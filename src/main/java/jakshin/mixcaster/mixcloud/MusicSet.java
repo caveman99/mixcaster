@@ -85,11 +85,24 @@ public record MusicSet(@NotNull String source, @NotNull String username, @Nullab
     /**
      * Creates a new instance.
      * @param input Input that defines the music set (username, music type, playlist).
+     *              Can optionally start with "hearthis" or "mixcloud" to specify source.
      */
     @Contract("_ -> new")
     @NotNull
     public static MusicSet of(@NotNull final List<String> input) throws InvalidInputException {
-        return of(input, "mixcloud");  // default to Mixcloud for backwards compatibility
+        // Check if the first element is a source name
+        String source = "mixcloud";  // default to Mixcloud for backwards compatibility
+        List<String> actualInput = input;
+
+        if (!input.isEmpty()) {
+            String firstWord = input.get(0).toLowerCase(Locale.ROOT);
+            if (firstWord.equals("hearthis") || firstWord.equals("mixcloud")) {
+                source = firstWord;
+                actualInput = input.subList(1, input.size());
+            }
+        }
+
+        return of(actualInput, source);
     }
 
     /**
