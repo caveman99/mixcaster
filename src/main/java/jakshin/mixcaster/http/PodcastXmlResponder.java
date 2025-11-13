@@ -70,6 +70,13 @@ class PodcastXmlResponder extends Responder {
         // Detect source from hostname in the request or use default
         String source = detectSource(request);
 
+        // If the path starts with the source name, strip it
+        if (pathParts.length > 0 && pathParts[0].equalsIgnoreCase(source)) {
+            String[] newPathParts = new String[pathParts.length - 1];
+            System.arraycopy(pathParts, 1, newPathParts, 0, pathParts.length - 1);
+            pathParts = newPathParts;
+        }
+
         MusicSet musicSet;
         try {
             musicSet = MusicSet.of(List.of(pathParts), source);
