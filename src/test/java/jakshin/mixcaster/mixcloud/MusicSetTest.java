@@ -39,15 +39,15 @@ class MusicSetTest {
 
         @Test
         void allowsPossessiveUsername() {
-            var set1 = new MusicSet("mixcloud", "mixcloud", "jason's", null, null);
-            var set2 = new MusicSet("mixcloud", "mixcloud", "jason's", null, null);
-            var set3 = new MusicSet("mixcloud", "mixcloud", "jason's", null, null);
+            var set1 = new MusicSet("mixcloud", "jason's", null, null);
+            var set2 = new MusicSet("mixcloud", "jason's", null, null);
+            var set3 = new MusicSet("mixcloud", "jason's", null, null);
 
             assertThat(set1.username()).isEqualTo("jason");
             assertThat(set2.username()).isEqualTo("jason");
             assertThat(set3.username()).isEqualTo("jason");
 
-            var canonical = new MusicSet("mixcloud", "mixcloud", "jason", null, null);
+            var canonical = new MusicSet("mixcloud", "jason", null, null);
             assertThat(set1).isEqualTo(canonical);
             assertThat(set2).isEqualTo(canonical);
             assertThat(set3).isEqualTo(canonical);
@@ -55,9 +55,9 @@ class MusicSetTest {
 
         @Test
         void throwsIfTheUsernameIsBlank() {
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "", null, null))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "", null, null))
                     .isInstanceOf(MusicSet.InvalidInputException.class);
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "\t", null, null))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "\t", null, null))
                     .isInstanceOf(MusicSet.InvalidInputException.class);
         }
 
@@ -65,15 +65,15 @@ class MusicSetTest {
         void allowsValidMusicTypes() {
             // playlists are covered separately below
 
-            var stream = new MusicSet("mixcloud", "mixcloud", "artist", "stream", null);
-            var shows = new MusicSet("mixcloud", "mixcloud", "artist", "shows", null);
-            var favorites = new MusicSet("mixcloud", "mixcloud", "artist", "favorites", null);
-            var history = new MusicSet("mixcloud", "mixcloud", "artist", "history", null);
+            var stream = new MusicSet("mixcloud", "artist", "stream", null);
+            var shows = new MusicSet("mixcloud", "artist", "shows", null);
+            var favorites = new MusicSet("mixcloud", "artist", "favorites", null);
+            var history = new MusicSet("mixcloud", "artist", "history", null);
 
-            var uploads = new MusicSet("mixcloud", "mixcloud", "artist", "uploads", null);
+            var uploads = new MusicSet("mixcloud", "artist", "uploads", null);
             assertThat(uploads).isEqualTo(shows);
 
-            var listens = new MusicSet("mixcloud", "mixcloud", "artist", "listens", null);
+            var listens = new MusicSet("mixcloud", "artist", "listens", null);
             assertThat(listens).isEqualTo(history);
         }
 
@@ -81,34 +81,34 @@ class MusicSetTest {
         void throwsIfMusicTypeIsInvalid() {
             // null is an acceptable music type, and means to use the user's default view
 
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "artist", "", null))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "artist", "", null))
                     .isInstanceOf(MusicSet.InvalidInputException.class);
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "artist", "\t", null))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "artist", "\t", null))
                     .isInstanceOf(MusicSet.InvalidInputException.class);
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "artist", "blargh", null))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "artist", "blargh", null))
                     .isInstanceOf(MusicSet.InvalidInputException.class);
         }
 
         @Test
         void  allowsValidPlaylist() {
-            var set1 = new MusicSet("mixcloud", "mixcloud", "artist", "playlist", "some-music");
-            var set2 = new MusicSet("mixcloud", "mixcloud", "artist", "playlists", "some-music");
+            var set1 = new MusicSet("mixcloud", "artist", "playlist", "some-music");
+            var set2 = new MusicSet("mixcloud", "artist", "playlists", "some-music");
             assertThat(set2).isEqualTo(set1);
         }
 
         @Test
         void throwsIfPlaylistIsInvalid() {
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "artist", "playlist", null))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "artist", "playlist", null))
                     .isInstanceOf(MusicSet.InvalidInputException.class)
                     .hasMessageContaining("Missing");
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "artist", "playlist", ""))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "artist", "playlist", ""))
                     .isInstanceOf(MusicSet.InvalidInputException.class)
                     .hasMessageContaining("Missing");
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "artist", "playlist", "\t"))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "artist", "playlist", "\t"))
                     .isInstanceOf(MusicSet.InvalidInputException.class)
                     .hasMessageContaining("Missing");
 
-            assertThatThrownBy(() -> new MusicSet("mixcloud", "mixcloud", "artist", "shows", "some-music"))
+            assertThatThrownBy(() -> new MusicSet("mixcloud", "artist", "shows", "some-music"))
                     .isInstanceOf(MusicSet.InvalidInputException.class)
                     .hasMessageContaining("Extra");
         }

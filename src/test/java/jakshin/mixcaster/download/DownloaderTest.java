@@ -148,7 +148,7 @@ class DownloaderTest {
 
             int index = mockedConstructionForMixcloudClient.constructed().size() - 1;
             MixcloudClient latestClient = mockedConstructionForMixcloudClient.constructed().get(index);
-            verify(latestClient).query(new MusicSet(artist, musicType, playlist));
+            verify(latestClient).query(new MusicSet("mixcloud", artist, musicType, playlist));
         }
 
         // since we passed a music type every time, we had no need to call queryDefaultView();
@@ -178,7 +178,7 @@ class DownloaderTest {
             int index = mockedConstructionForMixcloudClient.constructed().size() - 1;
             MixcloudClient latestClient = mockedConstructionForMixcloudClient.constructed().get(index);
             if (playlist.isBlank()) playlist = null;  // for the MusicSet constructor
-            verify(latestClient).query(new MusicSet(artist, part, playlist));
+            verify(latestClient).query(new MusicSet("mixcloud", artist, part, playlist));
         }
     }
 
@@ -251,7 +251,7 @@ class DownloaderTest {
 
         MixcloudClient client = mockedConstructionForMixcloudClient.constructed().get(0);
         verify(client).queryDefaultView(artist);  // mocked to return "favorites"
-        verify(client).query(new MusicSet(artist, "favorites", null));
+        verify(client).query(new MusicSet("mixcloud", artist, "favorites", null));
     }
 
     @Test

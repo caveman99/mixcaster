@@ -18,6 +18,7 @@
 package jakshin.mixcaster.watch;
 
 import jakshin.mixcaster.download.Downloader;
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.mixcloud.MusicSet;
 import org.junit.jupiter.api.*;
@@ -169,7 +170,7 @@ class WatcherTest {
     }
 
     @Test
-    void checksForNewMusic() throws IOException, MixcloudException,
+    void checksForNewMusic() throws IOException, MixcloudException, HearThisException,
             URISyntaxException, InterruptedException, TimeoutException {
         createMockConfigFile();  // contains 4 music sets
         int musicSetCount = 4;

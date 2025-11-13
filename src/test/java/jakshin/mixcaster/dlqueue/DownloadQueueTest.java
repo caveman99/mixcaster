@@ -269,7 +269,7 @@ class DownloadQueueTest {
             String artist = "user-" + randomString(8);  // name of the music file's parent directory
             filename = randomString(10) + ".m4a";
             lastModified = Date.from(Instant.now().minus(3, ChronoUnit.DAYS));
-            watchedSet = new MusicSet(artist, "shows", null);
+            watchedSet = new MusicSet("mixcloud", artist, "shows", null);
 
             String remoteUrl = "http://example.com/" + filename;
             String localPath = Path.of(mockMusicDir.toString(), artist, filename).toString();
