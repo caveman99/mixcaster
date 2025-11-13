@@ -152,13 +152,15 @@ public record MusicSet(@NotNull String source, @NotNull String username, @Nullab
     @NotNull
     @Override
     public String toString() {
-        String sourcePrefix = source.equals("hearthis") ? "[HearThis] " : "";
+        // For non-mixcloud sources, include the source prefix
+        String sourcePrefix = source.equals("mixcloud") ? "" : source + " ";
+
         if (musicType == null)
             return sourcePrefix + username;  // a user's default view
         else if (playlist == null)
-            return String.format("%s%s's %s", sourcePrefix, username, musicType);
+            return sourcePrefix + username + " " + musicType;
         else
-            return String.format("%s%s's playlist %s", sourcePrefix, username, playlist);
+            return sourcePrefix + username + " playlist " + playlist;
     }
 
     /**
