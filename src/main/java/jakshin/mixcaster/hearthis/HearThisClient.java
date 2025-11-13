@@ -560,6 +560,14 @@ public class HearThisClient {
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(HTTP_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
             .readTimeout(HTTP_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+            .addInterceptor(chain -> {
+                Request original = chain.request();
+                Request request = original.newBuilder()
+                        .header("User-Agent", System.getProperty("user_agent", "Mixcaster"))
+                        .method(original.method(), original.body())
+                        .build();
+                return chain.proceed(request);
+            })
             .build();
 
     /** Timeout for HTTP connects and reads. */
