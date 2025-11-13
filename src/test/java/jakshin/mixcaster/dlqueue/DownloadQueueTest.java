@@ -151,7 +151,7 @@ class DownloadQueueTest {
 
     @Test
     void updatesAttributesOnExistingFiles() throws IOException {
-        var watchedSet = new MusicSet("that-guy", "shows", null);
+        var watchedSet = new MusicSet("mixcloud", "that-guy", "shows", null);
         Download download = createDownload("test-exists-2.m4a", watchedSet);
         Files.writeString(Path.of(download.localFilePath), "test-exists-2");
         DownloadQueue q = DownloadQueue.getInstance();

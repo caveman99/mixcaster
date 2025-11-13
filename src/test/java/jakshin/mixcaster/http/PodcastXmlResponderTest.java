@@ -173,7 +173,7 @@ class PodcastXmlResponderTest {
 
         MixcloudClient mockClient = mockedClientConstruction.constructed().get(0);
         verify(mockClient).queryDefaultView("artist2");
-        verify(mockClient).query(new MusicSet("artist2", "stream", null));
+        verify(mockClient).query(new MusicSet("mixcloud", "artist2", "stream", null));
 
         // the user's default view should be in PodcastXmlResponder's cache now
         responder.respond(request, writer, out);

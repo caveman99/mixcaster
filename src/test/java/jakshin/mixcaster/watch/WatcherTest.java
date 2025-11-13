@@ -119,13 +119,13 @@ class WatcherTest {
     @Test
     void isWatchingAnyOfWorks() throws IOException {
         List<MusicSet> sets = List.of(
-                new MusicSet("some-rando", "favorites", null),
-                new MusicSet("paulvandyk", "shows", null)  // in our mock config file
+                new MusicSet("mixcloud", "some-rando", "favorites", null),
+                new MusicSet("mixcloud", "paulvandyk", "shows", null)  // in our mock config file
         );
         List<MusicSet> otherSets = List.of(
                 // neither of these is in our mock config file
-                new MusicSet("some-rando", "shows", null),
-                new MusicSet("paulvandyk", "favorites", null)
+                new MusicSet("mixcloud", "some-rando", "shows", null),
+                new MusicSet("mixcloud", "paulvandyk", "favorites", null)
         );
 
         assertThat(Watcher.isWatchingAnyOf(sets)).isFalse();

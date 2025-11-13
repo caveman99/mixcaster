@@ -237,7 +237,7 @@ class DownloaderTest {
 
         MixcloudClient client = mockedConstructionForMixcloudClient.constructed().get(0);
         verify(client).queryDefaultView("just-a-username");  // mocked to return "favorites"
-        verify(client).query(new MusicSet("just-a-username", "favorites", null));
+        verify(client).query(new MusicSet("mixcloud", "just-a-username", "favorites", null));
     }
 
     @Test
@@ -263,7 +263,7 @@ class DownloaderTest {
         // we want to write the attribute as such, not with the resolved music type
 
         String[] args = new String[] { "watched-username" };
-        MusicSet expectedSet = new MusicSet("watched-username", null, null);
+        MusicSet expectedSet = new MusicSet("mixcloud", "watched-username", null, null);
 
         try (MockedConstruction<Download> mocked = mockConstruction(Download.class,
                 (mock, context) -> {
