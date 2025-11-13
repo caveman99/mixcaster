@@ -123,7 +123,7 @@ class FileResponderTest {
     }
 
     @Test
-    void servesFilesFromTheRootMusicDirectory() throws MixcloudException, HttpException, IOException,
+    void servesFilesFromTheRootMusicDirectory() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         String fileName = "/hello.txt";
         Path path = Path.of(mockMusicDir.toString(), fileName);
@@ -186,7 +186,7 @@ class FileResponderTest {
     }
 
     @Test
-    void redirectsIfThePathIsAFolder() throws MixcloudException, HttpException, IOException,
+    void redirectsIfThePathIsAFolder() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/dir/subdir", "HTTP/1.1");
 
@@ -200,7 +200,7 @@ class FileResponderTest {
     }
 
     @Test
-    void updatesTheLastUsedAttribute() throws MixcloudException, HttpException, IOException,
+    void updatesTheLastUsedAttribute() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         Path otherFile = Path.of(mockMusicDir.toString(), "dir/other.mp3");
         Files.writeString(otherFile, "other fake file data");
@@ -221,7 +221,7 @@ class FileResponderTest {
     }
 
     @Test
-    void doesNotAddTheLastUsedAttribute() throws MixcloudException, HttpException, IOException,
+    void doesNotAddTheLastUsedAttribute() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/dir/file.m4a", "HTTP/1.1");
 
@@ -236,7 +236,7 @@ class FileResponderTest {
     }
 
     @Test
-    void handlesIfModifiedSince() throws MixcloudException, HttpException, IOException,
+    void handlesIfModifiedSince() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/dir/file.m4a", "HTTP/1.1");
 
@@ -255,7 +255,7 @@ class FileResponderTest {
     }
 
     @Test
-    void respondsToHeadRequests() throws MixcloudException, HttpException, IOException,
+    void respondsToHeadRequests() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         var headRequest = new HttpRequest("HEAD", "/dir/file.m4a", "HTTP/1.1");
 
@@ -274,7 +274,7 @@ class FileResponderTest {
     }
 
     @Test
-    void respondsToGetRequests() throws MixcloudException, HttpException, IOException,
+    void respondsToGetRequests() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request = new HttpRequest("GET", "/dir/file.m4a", "HTTP/1.1");
 
@@ -302,7 +302,7 @@ class FileResponderTest {
     }
 
     @Test
-    void respondsToRangeRequests() throws MixcloudException, HttpException, IOException,
+    void respondsToRangeRequests() throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         Files.writeString(Path.of(mockMusicDir.toString(), "dir/file.m4a"), "0123456789");
         request = new HttpRequest("GET", "/dir/file.m4a", "HTTP/1.1");
@@ -331,7 +331,7 @@ class FileResponderTest {
 
     private record Range(String bytes, String expectedContentRange, int expectedLength) {}
 
-    private void checkRangeRequest(Range range) throws MixcloudException, HttpException, IOException,
+    private void checkRangeRequest(Range range) throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         makeRangeRequest(range.bytes);
         String headers = writer.toString();
@@ -353,7 +353,7 @@ class FileResponderTest {
         assertThat(body.length).isEqualTo(range.expectedLength);
     }
 
-    private void makeRangeRequest(String rangeBytes) throws MixcloudException, HttpException, IOException,
+    private void makeRangeRequest(String rangeBytes) throws MixcloudException, HearThisException, HttpException, IOException,
                                     URISyntaxException, InterruptedException, TimeoutException {
         request.headers.put("Range", "bytes=" + rangeBytes);
         writer = new StringWriter();
