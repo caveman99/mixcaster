@@ -185,7 +185,7 @@ class MusicSetTest {
             var set = new MusicSet("mixcloud", "artist", "stream", null);
             String str = set.toString();
 
-            assertThat(str).isEqualTo("artist's stream");
+            assertThat(str).isEqualTo("artist stream");
             assertThat(MusicSet.of(List.of(str.split("\\s")))).isEqualTo(set);
         }
 
@@ -194,7 +194,7 @@ class MusicSetTest {
             var set = new MusicSet("mixcloud", "artist", "shows", null);
             String str = set.toString();
 
-            assertThat(str).isEqualTo("artist's shows");
+            assertThat(str).isEqualTo("artist shows");
             assertThat(MusicSet.of(List.of(str.split("\\s")))).isEqualTo(set);
         }
 
@@ -203,7 +203,7 @@ class MusicSetTest {
             var set = new MusicSet("mixcloud", "artist", "favorites", null);
             String str = set.toString();
 
-            assertThat(str).isEqualTo("artist's favorites");
+            assertThat(str).isEqualTo("artist favorites");
             assertThat(MusicSet.of(List.of(str.split("\\s")))).isEqualTo(set);
         }
 
@@ -212,7 +212,7 @@ class MusicSetTest {
             var set = new MusicSet("mixcloud", "artist", "history", null);
             String str = set.toString();
 
-            assertThat(str).isEqualTo("artist's history");
+            assertThat(str).isEqualTo("artist history");
             assertThat(MusicSet.of(List.of(str.split("\\s")))).isEqualTo(set);
         }
 
@@ -221,7 +221,7 @@ class MusicSetTest {
             var set = new MusicSet("mixcloud", "artist", "playlist", "some-music");
             String str = set.toString();
 
-            assertThat(str).isEqualTo("artist's playlist some-music");
+            assertThat(str).isEqualTo("artist playlist some-music");
             assertThat(MusicSet.of(List.of(str.split("\\s")))).isEqualTo(set);
         }
 
