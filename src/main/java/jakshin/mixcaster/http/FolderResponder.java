@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.http;
 
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ class FolderResponder extends Responder {
      * @param out An output stream which can be used to output the response.
      */
     void respond(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
-            throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
+            throws HttpException, InterruptedException, IOException, MixcloudException, HearThisException, TimeoutException, URISyntaxException {
 
         var folder = new ServableFile(request.path);
         String localPath = folder.getPath();

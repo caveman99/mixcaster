@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.http;
 
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.mixcloud.MusicSet;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ class Responder {
      * @return Whether the request was delegated to PodcastXmlResponder.
      */
     boolean delegateToPodcastXmlResponder(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
-            throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
+            throws HttpException, InterruptedException, IOException, MixcloudException, HearThisException, TimeoutException, URISyntaxException {
 
         String path = request.path.substring(1);  // strip the leading slash, to avoid empty string in pathParts[0]
         String[] pathParts = path.split("/");  // trailing empty string not included

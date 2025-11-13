@@ -17,6 +17,7 @@
 
 package jakshin.mixcaster.http;
 
+import jakshin.mixcaster.hearthis.HearThisException;
 import jakshin.mixcaster.mixcloud.MixcloudException;
 import jakshin.mixcaster.stale.Freshener;
 import jakshin.mixcaster.utils.MimeHelper;
@@ -43,7 +44,7 @@ class FileResponder extends Responder {
      * @param out An output stream which can be used to output the response.
      */
     void respond(@NotNull HttpRequest request, @NotNull Writer writer, @NotNull OutputStream out)
-            throws HttpException, InterruptedException, IOException, MixcloudException, TimeoutException, URISyntaxException {
+            throws HttpException, InterruptedException, IOException, MixcloudException, HearThisException, TimeoutException, URISyntaxException {
 
         try {
             var file = new ServableFile(request.path);
