@@ -78,7 +78,18 @@ class WatchSettings {
             try {
                 String[] words = line.split("\\s+");
                 List<String> wordList = Arrays.stream(words).filter(s -> !s.startsWith("-")).toList();
-                newMusicSets.add(MusicSet.of(wordList));
+
+                // Check if the first word is a source name (hearthis or mixcloud)
+                String source = "mixcloud";  // default
+                if (!wordList.isEmpty()) {
+                    String firstWord = wordList.get(0).toLowerCase();
+                    if (firstWord.equals("hearthis") || firstWord.equals("mixcloud")) {
+                        source = firstWord;
+                        wordList = wordList.subList(1, wordList.size());  // strip the source from the list
+                    }
+                }
+
+                newMusicSets.add(MusicSet.of(wordList, source));
             }
             catch (MusicSet.InvalidInputException ex) {
                 int realLineNum = lineNum + 1;  // 1-based for human consumption

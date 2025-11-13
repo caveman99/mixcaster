@@ -51,7 +51,11 @@ One way to minimize both of those minor hassles is to have Mixcaster "watch" the
 
 Mixcaster can watch specific Mixcloud or HearThis.at users or playlists for you. It will periodically check for new music in the background, and immediately download any it finds. When the timing works out well, Mixcaster will notice new music and download it before your podcast app queries it, (mostly) avoiding the annoyance of opening your podcast client and seeing `[DOWNLOADING, CAN'T PLAY YET]`.
 
-You can list the users and playlists you'd like for Mixcaster to watch in [mixcaster-watches.conf](config/mixcaster-watches.conf), and configure how often it checks for new music in [mixcaster-settings.properties](config/mixcaster-settings.properties). For HearThis.at users, simply use the HearThis.at URL format (e.g., `https://hearthis.at/username/`).
+You can list the users and playlists you'd like for Mixcaster to watch in [mixcaster-watches.conf](config/mixcaster-watches.conf), and configure how often it checks for new music in [mixcaster-settings.properties](config/mixcaster-settings.properties).
+
+For HearThis.at users, you can use either:
+* Full URL format: `https://hearthis.at/username/`
+* Prefix format: `hearthis username tracks` or `hearthis username likes`
 
 ### Downloading music from a command line
 
