@@ -19,6 +19,7 @@ package jakshin.mixcaster.dlqueue;
 
 import jakshin.mixcaster.mixcloud.MusicSet;
 import jakshin.mixcaster.stale.Freshener;
+import jakshin.mixcaster.utils.DateFormatter;
 import jakshin.mixcaster.utils.TimeSpanFormatter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -189,12 +190,6 @@ public final class DownloadQueue {
                 logger.log(INFO, "Starting download: {0}{1}    => {2}",
                         new String[] {this.download.remoteUrl, System.lineSeparator(), this.download.localFilePath});
 
-                // set up the HTTP connection we'll download from
-                conn = openConnection(this.download.remoteUrl);  // no actual network connection yet
-                conn.setInstanceFollowRedirects(true);
-                conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
-                conn.setRequestProperty("Referer", this.download.remoteUrl);
-
                 // set up the destination directory we'll download into
                 File localPartFile = new File(this.download.localFilePath + ".part");
                 File localDir = localPartFile.getParentFile();
@@ -211,32 +206,114 @@ public final class DownloadQueue {
                     Files.deleteIfExists(localPartFile.toPath());
                 }
 
-                // open the HTTP connection; this code will throw FileNotFoundException on 404s
-                try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
-                     OutputStream out = Files.newOutputStream(localPartFile.toPath(),
-                             CREATE, SYNC, TRUNCATE_EXISTING, WRITE, NOFOLLOW_LINKS)) {
+                // attempt the transfer, retrying on transient failures (stalls, resets) using HTTP Range to resume
+                final int maxAttempts = 5;
+                IOException lastFailure = null;
 
-                    freshenAttributes(localPartFile.toPath(), this.download.inWatchedSet);  // ASAP after file creation
+                for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                    if (conn != null) {
+                        conn.disconnect();
+                    }
 
-                    long totalBytesWritten = 0;
-                    final byte[] buf = new byte[65536];  // 64 KiB
+                    conn = openConnection(this.download.remoteUrl);
+                    conn.setInstanceFollowRedirects(true);
+                    conn.setConnectTimeout(30_000);
+                    conn.setReadTimeout(60_000);  // if no bytes arrive for 60s, SocketTimeoutException fires
+                    conn.setRequestProperty("User-Agent", System.getProperty("user_agent"));
+                    conn.setRequestProperty("Referer", this.download.remoteUrl);
 
-                    while (true) {
-                        int byteCount = in.read(buf, 0, buf.length);
-                        if (byteCount < 0) break;
+                    // if we have a partial .part file from a prior attempt, ask the server to resume;
+                    // If-Range ensures the server only honors the Range if the file hasn't changed —
+                    // on mismatch it returns 200 with the full body and we start over by truncating
+                    long existingBytes = localPartFile.isFile() ? localPartFile.length() : 0L;
+                    if (existingBytes > 0 && existingBytes < this.download.remoteLengthBytes) {
+                        conn.setRequestProperty("Range", "bytes=" + existingBytes + "-");
+                        conn.setRequestProperty("If-Range", DateFormatter.format(this.download.remoteLastModified));
+                    } else {
+                        existingBytes = 0L;
+                    }
 
-                        out.write(buf, 0, byteCount);
+                    try {
+                        int status = conn.getResponseCode();
+                        if (status != HttpURLConnection.HTTP_OK && status != HttpURLConnection.HTTP_PARTIAL) {
+                            throw new IOException("Unexpected HTTP status " + status + " from " + this.download.remoteUrl);
+                        }
 
-                        // show some progress info every so often, directly to stdout, so we don't clutter logs
-                        totalBytesWritten += byteCount;
-                        int percentComplete = (int) ((totalBytesWritten * 100f) / this.download.remoteLengthBytes);
+                        boolean resuming = (status == HttpURLConnection.HTTP_PARTIAL && existingBytes > 0);
+                        if (!resuming) {
+                            existingBytes = 0L;  // server ignored Range or file changed — start fresh
+                        }
 
-                        if (percentComplete % 10 == 0 && percentComplete < 100 && progressShownAtPercent < percentComplete) {
-                            String name = new File(download.localFilePath).getName();
-                            System.out.printf("  %d%% %s%n", percentComplete, name);
-                            progressShownAtPercent = percentComplete;
+                        OpenOption[] openOptions = resuming
+                                ? new OpenOption[] {CREATE, SYNC, APPEND, WRITE, NOFOLLOW_LINKS}
+                                : new OpenOption[] {CREATE, SYNC, TRUNCATE_EXISTING, WRITE, NOFOLLOW_LINKS};
+
+                        if (attempt > 1) {
+                            logger.log(INFO, "Download attempt {0}/{1}{2}: {3}",
+                                    new Object[] {attempt, maxAttempts,
+                                            resuming ? " (resuming at byte " + existingBytes + ")" : " (restarting)",
+                                            this.download.remoteUrl});
+                        }
+
+                        // this code will throw FileNotFoundException / IOException on HTTP >= 400
+                        try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
+                             OutputStream out = Files.newOutputStream(localPartFile.toPath(), openOptions)) {
+
+                            freshenAttributes(localPartFile.toPath(), this.download.inWatchedSet);  // ASAP after file creation
+
+                            long totalBytesWritten = existingBytes;
+                            final byte[] buf = new byte[65536];  // 64 KiB
+
+                            while (true) {
+                                int byteCount = in.read(buf, 0, buf.length);
+                                if (byteCount < 0) break;
+
+                                out.write(buf, 0, byteCount);
+
+                                // show some progress info every so often, directly to stdout, so we don't clutter logs
+                                totalBytesWritten += byteCount;
+                                int percentComplete = (int) ((totalBytesWritten * 100f) / this.download.remoteLengthBytes);
+
+                                if (percentComplete % 10 == 0 && percentComplete < 100 && progressShownAtPercent < percentComplete) {
+                                    String name = new File(download.localFilePath).getName();
+                                    System.out.printf("  %d%% %s%n", percentComplete, name);
+                                    progressShownAtPercent = percentComplete;
+                                }
+                            }
+                        }
+
+                        lastFailure = null;
+                        break;  // transfer succeeded
+                    }
+                    catch (IOException ex) {
+                        lastFailure = ex;
+
+                        // don't retry permanent client errors (404, 403, etc.) — only transient ones
+                        int statusAfter = -1;
+                        try { statusAfter = conn.getResponseCode(); } catch (IOException ignored) { /* no response */ }
+                        boolean permanent = statusAfter >= 400 && statusAfter < 500
+                                && statusAfter != 408 && statusAfter != 429;
+                        if (permanent || attempt >= maxAttempts) {
+                            throw ex;
+                        }
+
+                        long backoffMs = Math.min(30_000L, 1000L * (1L << (attempt - 1)));
+                        final int attemptFinal = attempt;
+                        logger.log(WARNING, ex, () -> String.format(
+                                "Download attempt %d/%d failed, retrying in %d ms: %s",
+                                attemptFinal, maxAttempts, backoffMs, this.download.remoteUrl));
+
+                        try {
+                            Thread.sleep(backoffMs);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw new IOException("Download interrupted", ie);
                         }
                     }
+                }
+
+                if (lastFailure != null) {
+                    throw lastFailure;
                 }
 
                 // set the file's last-modified timestamp to match the value from Mixcloud's server
