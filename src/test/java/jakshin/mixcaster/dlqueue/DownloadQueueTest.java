@@ -60,6 +60,8 @@ class DownloadQueueTest {
     private static final String testUserAgent = "Test User Agent/1.1";
     private static Path mockMusicDir;
 
+    private static int originalMaxDownloadAttempts;
+
     @BeforeAll
     static void beforeAll() throws IOException {
         mockMusicDir = TestUtilities.createMockMusicDir("mix-dlq-");
@@ -68,6 +70,9 @@ class DownloadQueueTest {
         System.setProperty("user_agent", testUserAgent);
         System.setProperty("download_threads", "auto");
         System.setProperty("download_oldest_first", String.valueOf(rand.nextBoolean()));
+
+        originalMaxDownloadAttempts = DownloadQueue.maxDownloadAttempts;
+        DownloadQueue.maxDownloadAttempts = 1;  // tests don't exercise retry logic; avoid exponential-backoff sleeps
 
         LogManager.getLogManager().reset();
         logger.setLevel(Level.OFF);
@@ -81,6 +86,8 @@ class DownloadQueueTest {
         System.clearProperty("user_agent");
         System.clearProperty("download_threads");
         System.clearProperty("download_oldest_first");
+
+        DownloadQueue.maxDownloadAttempts = originalMaxDownloadAttempts;
     }
 
     private Download createDownload(String fileName) {

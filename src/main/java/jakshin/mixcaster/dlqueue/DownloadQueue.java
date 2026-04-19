@@ -207,7 +207,7 @@ public final class DownloadQueue {
                 }
 
                 // attempt the transfer, retrying on transient failures (stalls, resets) using HTTP Range to resume
-                final int maxAttempts = 5;
+                final int maxAttempts = maxDownloadAttempts;
                 IOException lastFailure = null;
 
                 for (int attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -234,10 +234,13 @@ public final class DownloadQueue {
                     }
 
                     try {
-                        int status = conn.getResponseCode();
-                        if (status != HttpURLConnection.HTTP_OK && status != HttpURLConnection.HTTP_PARTIAL) {
-                            throw new IOException("Unexpected HTTP status " + status + " from " + this.download.remoteUrl);
-                        }
+                        // open the stream first (throws FileNotFoundException on 404s, matching pre-retry behavior);
+                        // read status afterwards only to decide whether to resume — if we can't get it, assume 200 OK
+                        BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
+
+                        int status;
+                        try { status = conn.getResponseCode(); }
+                        catch (IOException ignored) { status = HttpURLConnection.HTTP_OK; }
 
                         boolean resuming = (status == HttpURLConnection.HTTP_PARTIAL && existingBytes > 0);
                         if (!resuming) {
@@ -255,9 +258,7 @@ public final class DownloadQueue {
                                             this.download.remoteUrl});
                         }
 
-                        // this code will throw FileNotFoundException / IOException on HTTP >= 400
-                        try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
-                             OutputStream out = Files.newOutputStream(localPartFile.toPath(), openOptions)) {
+                        try (in; OutputStream out = Files.newOutputStream(localPartFile.toPath(), openOptions)) {
 
                             freshenAttributes(localPartFile.toPath(), this.download.inWatchedSet);  // ASAP after file creation
 
@@ -372,6 +373,10 @@ public final class DownloadQueue {
         /** Keeping track of when we've shown progress on stdout. */
         private int progressShownAtPercent;
     }
+
+    /** Max retry attempts per download before giving up (package-private so tests can lower it). */
+    @VisibleForTesting
+    static int maxDownloadAttempts = 5;
 
     /** The pool of download threads. */
     private final ThreadPoolExecutor pool;
